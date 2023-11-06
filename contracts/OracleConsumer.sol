@@ -12,10 +12,14 @@ contract OracleConsumer is Ownable {
         oracleContract = RedstoneOracle(_oracleContract);
     }
 
-    function mockSwap(address firstToken, address secondToken) public view returns(uint256[] memory) {
+    function mockSwap(address firstToken, address secondToken) public view returns(bool) {
+        address[] memory dummyAddreses = new address[](2);
+        dummyAddreses[0] = address(1);
+        dummyAddreses[1] = address(2);
         address[] memory tokenAddresses = new address[](1);
         tokenAddresses[0] = firstToken;
-        return getPricesFromOracle(tokenAddresses);
+        getPricesFromOracle(tokenAddresses);
+        return true;
     }
 
     function getPricesFromOracle(address[] memory _tokenAddresses) public view returns (uint256[] memory) 
@@ -26,27 +30,32 @@ contract OracleConsumer is Ownable {
         }
         address oracleContractAddress = address(oracleContract);        
         bytes memory redstonePayload = abi.encodeWithSignature("getLatestPrices(bytes32[])", dataFeedIds);
-        
+        bytes memory bytesRes;
+    
         assembly {
             let initialRedstoneLen := mload(redstonePayload)
             let newRedstoneLen := add(initialRedstoneLen, calldatasize())
             mstore(redstonePayload, newRedstoneLen)
             let oldMemorySize := mload(0x40)
-            let newMemorySizeAfterAddingData
-            newMemorySizeAfterAddingData := add(oldMemorySize, calldatasize())
-            calldatacopy(add(redstonePayload, add(initialRedstoneLen, 0x20)), 0x00, calldatasize())
+            bytesRes := add(oldMemorySize, calldatasize())
+            calldatacopy(oldMemorySize, 0x00, calldatasize())
             let success := staticcall(gas(), oracleContractAddress, add(redstonePayload, 0x20), newRedstoneLen, 0, 0)
-            returndatacopy(newMemorySizeAfterAddingData, 0, returndatasize())
-            // memory expand because of adding return data to memory
-            mstore(0x40, add(newMemorySizeAfterAddingData, returndatasize()))
-            switch success
-            case 0  {
-                revert(newMemorySizeAfterAddingData, returndatasize())
+            // construct the memory bytes array
+            mstore(bytesRes, returndatasize())
+            returndatacopy(add(0x20, bytesRes), 0, returndatasize())
+            switch success 
+            case 0 {
+                // bubble up the error
+                revert(add(0x20, bytesRes),returndatasize())
             }
             default {
-                return(newMemorySizeAfterAddingData, returndatasize())
+                mstore(0x40, add(add(bytesRes, 0x20), returndatasize()))
             }
         }
+
+        (uint256[] memory res) =  abi.decode(bytesRes, (uint256[]));
+
+        return res;
 
     } 
 }
