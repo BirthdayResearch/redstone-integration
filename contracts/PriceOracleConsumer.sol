@@ -1,3 +1,5 @@
+pragma solidity 0.8.19;
+
 contract PriceOracleConsumer {
 
     function getPricesForDataFeedsFromOracle(bytes32[] memory dataFeedIds, address oracle) public view returns (uint256[] memory) {

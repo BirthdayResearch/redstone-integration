@@ -3,15 +3,26 @@ import { ethers as ethersv5 } from "ethersv5.7.2";
 import {abi as RedstoneOracleAbi} from "../artifacts/contracts/RedstoneOracle.sol/RedstoneOracle.json"
 import {abi as OracleConsumerAbi} from "../artifacts/contracts/OracleConsumer.sol/OracleConsumer.json"
 import { CustomDataServiceWrapper } from "../scripts/CustomDataServiceWrapperClass";
+import {expect} from "chai";
+import { RedstoneOracle__factory } from "../typechain-types";
 
-describe("Oracle consumer", function () {
+describe("Request data successfully ", function () {
 
-  it("Should get the price", async () => {
+  let redstoneOracleV5: ethersv5.Contract;
+  let oracleConsumerV5: ethersv5.Contract;
+
+  before(async () => {
     const redstoneOracle = await ethers.deployContract("RedstoneOracle");
     const redstoneOracleAddress = await redstoneOracle.getAddress();
     const oracleConsumer = await ethers.deployContract("OracleConsumer", [[ethers.ZeroAddress, `0x`+ "0".repeat(39) + `1`], [ethers.encodeBytes32String("ETH"), ethers.encodeBytes32String("BTC")], redstoneOracleAddress]);
-    const redstoneOracleV5 = new ethersv5.Contract(redstoneOracleAddress, RedstoneOracleAbi, new ethersv5.providers.JsonRpcProvider("http://127.0.0.1:8545"));
-    const oracleConsumerV5 = new ethersv5.Contract(await oracleConsumer.getAddress(),OracleConsumerAbi,  new ethersv5.providers.JsonRpcProvider("http://127.0.0.1:8545") )
+    const hardhatNodeProvider = new ethersv5.providers.JsonRpcProvider("http://127.0.0.1:8545");
+    // copied the private key of the first account from hardhat
+    const signer0 = new ethersv5.Wallet("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80", hardhatNodeProvider );
+    redstoneOracleV5 = new ethersv5.Contract(redstoneOracleAddress, RedstoneOracleAbi, hardhatNodeProvider);
+    oracleConsumerV5 = new ethersv5.Contract(await oracleConsumer.getAddress(), OracleConsumerAbi,  signer0);
+  })
+
+  it("Should get the price when specifying both datafeeds and dataserviceids", async () => {
 
     const oracleConsumerV5wrapped = new CustomDataServiceWrapper({
       dataServiceId: "redstone-primary-prod",
@@ -20,8 +31,41 @@ describe("Oracle consumer", function () {
       redstoneOracleV5
     ).overwriteEthersContract(oracleConsumerV5);
 
-    const result = await oracleConsumerV5wrapped.getPricesFromOracle([ethers.ZeroAddress, `0x`+ "0".repeat(39) + `1`]);
+    const result = await oracleConsumerV5wrapped.getPricesForTokenAddresses([ethers.ZeroAddress, `0x`+ "0".repeat(39) + `1`]);
     console.log(result);
-  
+
+    let result2: ethersv5.ContractTransaction = await oracleConsumerV5wrapped.mockSwap(ethers.ZeroAddress, `0x`+ "0".repeat(39) + `1`);
+    const result2Receipt = await result2.wait();
+    const dataToDecode = result2Receipt?.events ? result2Receipt?.events[0].data : "";
+    console.log(oracleConsumerV5.interface.decodeEventLog("SWAP_WITH_PRICE", dataToDecode));
   })
-});
+
+  it("Should get the price without specifying the data service id", async () => {
+    const oracleConsumerV5wrapped = new CustomDataServiceWrapper({
+      dataFeeds: ["ETH", "BTC"]
+    },
+      redstoneOracleV5 
+    ).overwriteEthersContract(oracleConsumerV5);
+    
+    const oraclePrices = await oracleConsumerV5wrapped.getPricesForTokenAddresses([ethers.ZeroAddress, `0x`+ "0".repeat(39) + `1`]);
+
+    console.log("Oracle prices are ", oraclePrices.map((x: ethersv5.BigNumber) => x.toString()));
+  })
+})
+
+describe( "Request data unsuccessfully ", () => {
+  it("Should bubble up the error if sending invalid data", async () => {
+    const redstoneOracle = await ethers.deployContract("RedstoneOracle");
+    const redstoneOracleAddress = await redstoneOracle.getAddress();
+    const oracleConsumer = await ethers.deployContract("OracleConsumer", [[ethers.ZeroAddress, `0x`+ "0".repeat(39) + `1`], [ethers.encodeBytes32String("ETH"), ethers.encodeBytes32String("BTC")], redstoneOracleAddress]);
+    const callDataToSend = oracleConsumer.interface.encodeFunctionData("mockSwap", [ethers.ZeroAddress, `0x`+ "0".repeat(39) + `1`]);
+    const oracleConsumerInFormRedstoneOracle = RedstoneOracle__factory.connect(await oracleConsumer.getAddress());
+    await expect(
+      (await ethers.getSigners())[0].call({
+        data: callDataToSend, 
+        to: await oracleConsumer.getAddress()
+      })
+    ).to.revertedWithCustomError(oracleConsumerInFormRedstoneOracle, "CalldataMustHaveValidPayload");
+  })
+
+})

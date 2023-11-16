@@ -1,3 +1,4 @@
+// copied and adapted from here: https://github.com/redstone-finance/redstone-oracles-monorepo/blob/20f8076d9e6fa4bb8e6b070b0c6b13356534e496/packages/evm-connector/src/wrappers/DataServiceWrapper.ts#L1
 import { BaseWrapper } from "@redstone-finance/evm-connector/dist/src/wrappers/BaseWrapper";
 import { Contract } from "ethersv5.7.2";
 import version from  "@redstone-finance/evm-connector/dist/package.json";
@@ -40,11 +41,11 @@ export class CustomDataServiceWrapper<T extends Contract> extends BaseWrapper<T>
   
       if (!this.dataPackagesRequestParams.uniqueSignersCount) {
         fetchedParams.uniqueSignersCount =
-          await this.getUniqueSignersThresholdFromContract();
+          await this.getUniqueSignersThresholdFromOracleContract();
       }
   
       if (!this.dataPackagesRequestParams.dataServiceId) {
-        fetchedParams.dataServiceId = await this.getDataServiceIdFromContract();
+        fetchedParams.dataServiceId = await this.getDataServiceIdFromOracleContract();
       }
   
       if (!this.dataPackagesRequestParams.urls) {
@@ -58,7 +59,7 @@ export class CustomDataServiceWrapper<T extends Contract> extends BaseWrapper<T>
       return fetchedParams;
     }
   
-    private async getDataServiceIdFromContract(): Promise<string> {
+    private async getDataServiceIdFromOracleContract(): Promise<string> {
       try {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         const dataServiceId = (await this.oracleContract.getDataServiceId()) as string;
@@ -71,7 +72,7 @@ export class CustomDataServiceWrapper<T extends Contract> extends BaseWrapper<T>
       }
     }
   
-    private async getUniqueSignersThresholdFromContract(): Promise<number> {
+    private async getUniqueSignersThresholdFromOracleContract(): Promise<number> {
       try {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         return (await this.oracleContract.getUniqueSignersThreshold()) as number;
