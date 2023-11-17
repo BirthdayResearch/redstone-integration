@@ -12,3 +12,5 @@ artifacts
 #foundry files
 out
 cache_forge
+
+dist
