@@ -8,10 +8,6 @@ contract RedstoneOracle is PrimaryProdDataServiceConsumerBase {
         return getOracleNumericValueFromTxMsg(dataFeedId);
     }
 
-    function getLatestPriceWithPayload(bytes32 dataFeedId, bytes memory payload) public view returns (uint256) {
-        return getOracleNumericValueFromTxMsg(dataFeedId);
-    }
-
     function getLatestPrices(bytes32[] memory dataFeedIds) public view returns (uint256[] memory) {
         return getOracleNumericValuesFromTxMsg(dataFeedIds);
     }
