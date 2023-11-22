@@ -51,21 +51,50 @@ describe("Request data successfully ", function () {
 
     console.log("Oracle prices are ", oraclePrices.map((x: ethersv5.BigNumber) => x.toString()));
   })
+
+  it("Should get a single price", async () => {
+    const oracleConsumerV5Wrapped = new CustomDataServiceWrapper({
+      dataFeeds: ["ETH"], 
+    }, redstoneOracleV5).overwriteEthersContract(oracleConsumerV5);
+
+    console.log("Single price is");
+    console.log(await oracleConsumerV5Wrapped.getPriceForTokenAddress(ethers.ZeroAddress));
+  })
 })
 
 describe( "Request data unsuccessfully ", () => {
-  it("Should bubble up the error if sending invalid data", async () => {
-    const redstoneOracle = await ethers.deployContract("RedstoneOracle");
-    const redstoneOracleAddress = await redstoneOracle.getAddress();
-    const oracleConsumer = await ethers.deployContract("OracleConsumer", [[ethers.ZeroAddress, `0x`+ "0".repeat(39) + `1`], [ethers.encodeBytes32String("ETH"), ethers.encodeBytes32String("BTC")], redstoneOracleAddress]);
-    const callDataToSend = oracleConsumer.interface.encodeFunctionData("mockSwap", [ethers.ZeroAddress, `0x`+ "0".repeat(39) + `1`]);
+
+  let redstoneOracle: any;
+  let oracleConsumer: any;
+  let redstoneOracleAddress: string;
+  
+  before(async () => {
+    redstoneOracle = await ethers.deployContract("RedstoneOracle");
+    redstoneOracleAddress = await redstoneOracle.getAddress();
+    oracleConsumer = await ethers.deployContract("OracleConsumer", [[ethers.ZeroAddress, `0x`+ "0".repeat(39) + `1`], [ethers.encodeBytes32String("ETH"), ethers.encodeBytes32String("BTC")], redstoneOracleAddress]);  
+  })
+
+  it("Should bubble up the error if sending invalid data (when requesting for many data feeds)", async () => {
+    // change the end of the calldata so that it does not satisfy the REDSTONE_MARKER_MASK requirement
+    const callDataToSend = oracleConsumer.interface.encodeFunctionData("mockSwap", [ethers.ZeroAddress, `0x`+ "0".repeat(39) + `1`]) + "0000000000000000000000000000000000000000000000000002ed57011c0000";
     const oracleConsumerInFormRedstoneOracle = RedstoneOracle__factory.connect(await oracleConsumer.getAddress());
     await expect(
-      (await ethers.getSigners())[0].call({
+      (await ethers.getSigners())[0].sendTransaction({
         data: callDataToSend, 
         to: await oracleConsumer.getAddress()
       })
     ).to.revertedWithCustomError(oracleConsumerInFormRedstoneOracle, "CalldataMustHaveValidPayload");
   })
 
+  it("Should bubble up the error if sending invalid data (when requesting for only one data feed)", async () => {
+    // change the end of the calldata so that it does not satisfy the REDSTONE_MARKER_MASK requirement
+    const callDataToSend = oracleConsumer.interface.encodeFunctionData("getPriceForTokenAddress", [ethers.ZeroAddress]) + "0000000000000000000000000000000000000000000000000002ed57011c0000";
+    const oracleConsumerInFormRedstoneOracle = RedstoneOracle__factory.connect(await oracleConsumer.getAddress());
+    await expect(
+      (await ethers.getSigners())[0].call({
+        data: callDataToSend,
+        to: await oracleConsumer.getAddress()
+      })
+    ).to.revertedWithCustomError(oracleConsumerInFormRedstoneOracle, "CalldataMustHaveValidPayload");
+  } )
 })

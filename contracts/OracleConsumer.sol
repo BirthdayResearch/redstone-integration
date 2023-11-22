@@ -34,5 +34,12 @@ contract OracleConsumer is PriceOracleConsumer, Ownable {
         address oracleContractAddress = address(oracleContract);        
         return getPricesForDataFeedsFromOracle(dataFeedIds, oracleContractAddress);
 
+    }
+
+    function getPriceForTokenAddress(address _tokenAddress) public view returns (uint256) 
+    {
+        bytes32 dataFeedId = tokenToDataFeedId[_tokenAddress];
+        address oracleContractAddress = address(oracleContract);
+        return getPriceForDataFeedFromOracle(dataFeedId, oracleContractAddress);
     } 
 }
