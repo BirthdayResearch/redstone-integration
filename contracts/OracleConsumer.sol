@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.19;
+
 import "./RedstoneOracle.sol";
 import "./PriceOracleConsumer.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
