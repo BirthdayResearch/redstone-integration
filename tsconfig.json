@@ -1,6 +1,7 @@
 {
   "extends": "@birthdayresearch/sticky-typescript",
   "compilerOptions": {
-    "rootDir": "./"
+    "rootDir": "./",       
+    "resolveJsonModule": true
   }
 }

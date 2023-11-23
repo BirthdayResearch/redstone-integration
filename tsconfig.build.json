@@ -4,6 +4,5 @@
     "compilerOptions": {
       "rootDir": "./",
       "outDir": "./dist",
-      "resolveJsonModule": true
     }
 }
