@@ -45,7 +45,7 @@
     "@birthdayresearch/sticky-typescript": "^0.8.5",
     "@nomicfoundation/hardhat-ledger": "^1.0.1",
     "@openzeppelin/contracts": "^4.9.3",
-    "@redstone-finance/evm-connector": "^0.3.4",
+    "@redstone-finance/evm-connector": "0.3.6",
     "dotenv": "^16.3.1",
     "ethersv5.7.2": "npm:ethers@^5.7.2",
     "solhint": "^4.0.0"
