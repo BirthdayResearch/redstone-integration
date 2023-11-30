@@ -1,0 +1,1 @@
+export { CustomDataServiceWrapper } from "./scripts/CustomDataServiceWrapperClass";

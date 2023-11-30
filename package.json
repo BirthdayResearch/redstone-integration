@@ -1,12 +1,53 @@
 {
-  "name": "hardhat-project",
+  "name": "@waveshq/redstone-metachain-integration",
+  "version": "0.0.1",
+  "private": false,
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "compile": "npm run solhint && hardhat compile",
+    "solhint": "solhint contracts/**/*.sol",
+    "clean": "rm -rf dist && hardhat clean"
+  },
+  "prettier": "@birthdayresearch/sticky-prettier",
+  "eslintConfig": {
+    "parserOptions": {
+      "project": "./tsconfig.json"
+    },
+    "extends": [
+      "@birthdayresearch"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "*.ts"
+        ],
+        "rules": {
+          "no-console": "off",
+          "import/no-default-export": "off"
+        }
+      }
+    ]
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "contracts/PriceOracleConsumer.sol",
+    "contracts/RedstoneOracle.sol",
+    "dist/**",
+    "artifacts/contracts/RedstoneOracle.sol/RedstoneOracle.json"
+  ],
   "devDependencies": {
+    "@nomicfoundation/hardhat-foundry": "^1.1.1",
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
     "hardhat": "^2.18.1"
   },
   "dependencies": {
+    "@birthdayresearch/sticky-typescript": "^0.8.5",
+    "@nomicfoundation/hardhat-ledger": "^1.0.1",
     "@openzeppelin/contracts": "^4.9.3",
-    "@redstone-finance/evm-connector": "^0.3.4",
-    "ethersv5.7.2": "npm:ethers@^5.7.2"
+    "@redstone-finance/evm-connector": "0.3.6",
+    "dotenv": "^16.3.1",
+    "ethersv5.7.2": "npm:ethers@^5.7.2",
+    "solhint": "^4.0.0"
   }
 }

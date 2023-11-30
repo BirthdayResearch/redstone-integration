@@ -1,0 +1,7 @@
+@chainlink/=node_modules/@chainlink/
+@eth-optimism/=node_modules/@chainlink/contracts/node_modules/@eth-optimism/
+@openzeppelin/=node_modules/@openzeppelin/
+@redstone-finance/=node_modules/@redstone-finance/
+eth-gas-reporter/=node_modules/eth-gas-reporter/
+forge-std/=lib/forge-std/src/
+hardhat/=node_modules/hardhat/
